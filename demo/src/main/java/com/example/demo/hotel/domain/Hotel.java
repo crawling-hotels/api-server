@@ -17,10 +17,10 @@ public class Hotel {
 
     private String name;
 
-    @OneToMany(cascade = CascadeType.PERSIST, mappedBy = "board")
+    @OneToMany(cascade = CascadeType.PERSIST, mappedBy = "hotel")
     private Collection<Board> boards;
 
-    @OneToMany(cascade = CascadeType.PERSIST, mappedBy = "schedule")
+    @OneToMany(cascade = CascadeType.PERSIST, mappedBy = "hotel")
     private Collection<Schedule> schedules;
 
 
