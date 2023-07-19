@@ -1,10 +1,10 @@
 package com.example.demo.board.domain;
 
+import com.example.demo.user.domain.User;
 import com.example.demo.util.config.BaseEntity;
 import jakarta.persistence.*;
 import lombok.AccessLevel;
 import lombok.NoArgsConstructor;
-import org.h2.engine.User;
 
 import java.time.LocalDateTime;
 

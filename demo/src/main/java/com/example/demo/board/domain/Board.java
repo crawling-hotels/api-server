@@ -1,10 +1,10 @@
 package com.example.demo.board.domain;
 
 import com.example.demo.hotel.domain.Hotel;
+import com.example.demo.user.domain.User;
 import com.example.demo.util.config.BaseEntity;
 import jakarta.persistence.*;
 import lombok.NoArgsConstructor;
-import org.h2.engine.User;
 
 import java.util.List;
 
@@ -19,7 +19,7 @@ public class Board extends BaseEntity {
 
     private String content;
 
-    @OneToMany(cascade = CascadeType.ALL, mappedBy = "comment")
+    @OneToMany(cascade = CascadeType.ALL, mappedBy = "board")
     private List<Comment> comments;
 
     private String imagePath;
@@ -28,6 +28,6 @@ public class Board extends BaseEntity {
     @JoinColumn(name = "user_id")
     private User user;
 
-    @OneToOne(fetch = FetchType.LAZY)
+    @ManyToOne(fetch = FetchType.LAZY)
     private Hotel hotel;
 }
