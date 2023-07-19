@@ -1,5 +1,6 @@
 package com.example.demo.calendar.domain;
 
+import com.example.demo.user.domain.User;
 import jakarta.persistence.*;
 
 import java.util.Collection;
@@ -12,9 +13,9 @@ public class Calendar {
     @Column(name = "calendar_id")
     private Long id;
 
-    @OneToMany(mappedBy = "user", cascade = CascadeType.PERSIST)
+    @OneToMany(mappedBy = "calendar", cascade = CascadeType.PERSIST)
     private Collection<User> user;
 
-    @OneToMany(mappedBy = "schedule", cascade = CascadeType.ALL)
+    @OneToMany(mappedBy = "calendar", cascade = CascadeType.ALL)
     private Collection<Schedule> schedules;
 }

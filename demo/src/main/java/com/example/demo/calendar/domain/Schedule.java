@@ -13,7 +13,7 @@ public class Schedule {
     private Long id;
 
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "schedule_id")
+    @JoinColumn(name = "calendar_id")
     private Calendar calendar;
 
     @ManyToOne(fetch = FetchType.LAZY)
