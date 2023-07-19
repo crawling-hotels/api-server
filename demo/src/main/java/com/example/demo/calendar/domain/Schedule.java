@@ -16,7 +16,8 @@ public class Schedule {
     @JoinColumn(name = "schedule_id")
     private Calendar calendar;
 
-    @OneToOne(fetch = FetchType.LAZY)
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "hotel_id")
     private Hotel hotel;
 
     @Column(nullable = false)
