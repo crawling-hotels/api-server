@@ -8,23 +8,76 @@ import org.jsoup.select.Elements;
 
 import java.io.IOException;
 import java.net.URLDecoder;
+import java.net.URLEncoder;
 import java.time.LocalDate;
 import java.util.logging.Logger;
 
 public class Crawling {
     private final static Logger log = Logger.getGlobal();
 
+    public static void search(String keyword, LocalDate startDate, LocalDate endDate, Long day) throws IOException {
+
+        String encoded = URLEncoder.encode(keyword, "UTF-8");
+
+        for(LocalDate i = startDate; i.isBefore(endDate.minusDays(day + 1)); i.plusDays(1)){
+            Document goodChoice = Jsoup.connect("https://www.goodchoice.kr/product/result?" +
+                    "sel_date=" + i.toString() +
+                    "&sel_date2=" + i.plusDays(day).toString() +
+                    "&keyword=" + encoded).get();
+
+            System.out.println(goodChoice.title());
+
+            /**
+             * 특급 SL 호텔 강릉 9.0 추천해요 (781) 주문진터미널 차량 4분 7월 깜짝특전! [패밀리풀 2인 입장권 무료]
+             */
+//            Elements names = goodChoice.getElementsByClass("name");
+//            for (Element p : names) {
+//                System.out.println(p.text());
+//            }
+        }
+
+    }
+    public static void main2(String[] args) throws IOException {
+        String keyword = "강릉";
+        LocalDate startDate = LocalDate.of(2023, 8, 1);
+        LocalDate endDate = LocalDate.of(2023, 8, 4);
+        Long day = 2L;
+
+        for(LocalDate i = startDate; i.isBefore(endDate.minusDays(day).plusDays(2)); i = i.plusDays(1)) {
+            System.out.println(i);
+            Document goodChoice = Jsoup.connect("https://www.goodchoice.kr/product/result?" +
+                    "sel_date=" + i.toString() +
+                    "&sel_date2=" + i.plusDays(day).toString() +
+                    "&keyword=" + keyword)
+                    .get();
+
+            System.out.println(goodChoice.title());
+        }
+    }
+
+    /**
+     * 네이버호텔
+     */
     public static void main(String[] args) throws IOException {
+        Document doc = Jsoup.connect("https://hotels.naver.com/list?placeFileName=place%3AJeju_Province&adultCnt=2&checkIn=2023-08-08&checkOut=2023-08-10&includeTax=false&sortField=popularityKR&sortDirection=descending").get();
+
+        System.out.println(doc.body());
+    }
 
 
-        LocalDate test = LocalDate.now();
-        System.out.println(test.toString());
+    /**
+     * 여기어떄
+     */
+    public static void main3(String[] args) throws IOException {
+        /**
+         * 2023-07-20
+         */
+//        LocalDate test = LocalDate.now();
+//        System.out.println(test.toString());
 
-        String decoded = new String(URLDecoder.decode("%EA%B0%95%EB%A6%89", "UTF-8"));
-        log.info(decoded);
-
-        Document doc = Jsoup.connect("https://www.goodchoice.kr/product/result?sel_date=2023-07-27&sel_date2=2023-07-28&keyword=%EA%B0%95%EB%A6%89").get();
+        Document doc = Jsoup.connect("https://www.goodchoice.kr/product/result?sel_date=2023-07-27&sel_date2=2023-07-28&keyword=" + "서울").get();
 //        log.info(doc.title());
+
 
         Element body = doc.body();
 //        System.out.println(body);
