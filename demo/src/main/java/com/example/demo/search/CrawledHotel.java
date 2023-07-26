@@ -5,16 +5,29 @@ import java.util.List;
 
 public class CrawledHotel {
     private String name;
-    private String path;
-    private String image;
-    private String score;
+
+    private List<HotelInfo> hotelInfos;
+
     private List<PriceByDate> prices;
 
-    public CrawledHotel(String name, String path, String image, String score) {
+    public CrawledHotel(String name) {
         this.name = name;
-        this.path = path;
-        this.image = image;
-        this.score = score;
+    }
+
+    public void addHotelInfo(HotelInfo hotelInfo){
+        if(hotelInfos == null){
+            hotelInfos = new ArrayList<>();
+        }
+
+        this.hotelInfos.add(hotelInfo);
+    }
+
+    public void addHotelInfoAll(List<HotelInfo> hotelInfos){
+        this.hotelInfos.addAll(hotelInfos);
+    }
+
+    public List<HotelInfo> getHotelInfos(){
+        return hotelInfos;
     }
 
     public void addPriceByDate(PriceByDate priceByDate){
@@ -25,8 +38,27 @@ public class CrawledHotel {
         this.prices.add(priceByDate);
     }
 
+    public void addPriceByDateAll(List<PriceByDate> priceByDates){
+        this.prices.addAll(priceByDates);
+    }
+
+    public List<PriceByDate> getPrices(){
+        return prices;
+    }
+
     @Override
     public String toString() {
-        return "path : " + this.path + ", image : " + this.image + ", score : " + this.score + ", prices : " + this.prices;
+        String returnStr =  "name : " + this.name +
+                " hotelInfos : " ;
+        for(HotelInfo h : hotelInfos){
+            returnStr += h.toString();
+        }
+
+        returnStr += ", prices : ";
+        for(PriceByDate p : prices){
+            returnStr += p.toString();
+        }
+
+        return returnStr;
     }
 }

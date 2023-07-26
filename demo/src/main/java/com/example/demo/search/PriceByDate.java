@@ -12,4 +12,9 @@ public class PriceByDate {
         this.checkout = checkout;
         this.price = price;
     }
+
+    @Override
+    public String toString() {
+        return "{ company : " + this.company + " , checkin : " + this.checkin + " , checkout : " + this.checkout + " , price : " + this.price + " }";
+    }
 }

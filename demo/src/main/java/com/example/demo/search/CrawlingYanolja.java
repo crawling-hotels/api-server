@@ -17,17 +17,11 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 public class CrawlingYanolja {
-    public static void main(String[] args) throws Exception {
+    public static HashMap<String, CrawledHotel> search(String keyword, LocalDate startDate, LocalDate endDate, Long day) throws Exception {
         HashMap<String, CrawledHotel> yanoljaHashMap = new HashMap<>();
 
         SafariOptions options = new SafariOptions();
         WebDriver driver = new SafariDriver(new SafariOptions());
-
-        Boolean bootstrap = Boolean.TRUE;
-        String keyword = "강릉";
-        LocalDate startDate = LocalDate.of(2023, 8, 1);
-        LocalDate endDate = LocalDate.of(2023, 8, 5);
-        Long day = 2L;
 
         for(LocalDate i = startDate; i.isBefore(endDate.minusDays(day).plusDays(1)); i = i.plusDays(1)) {
 
@@ -54,22 +48,20 @@ public class CrawlingYanolja {
                 String title = "";
 
                 for (WebElement aTag : aTags) {
-                    if (bootstrap) {
+                    String titleValue = aTag.getAttribute("title");
+                    Matcher matcher = pattern.matcher(titleValue);
+                    title = matcher.replaceAll("");
+
+                    if (!yanoljaHashMap.containsKey(title)) {
                         String scoreValue = aTag.findElement(By.cssSelector(".PlaceListScore_rating__3Glxf")).getText();
                         String imageValue = aTag.findElement(By.cssSelector(".PlaceListImage_imageText__2XEMn")).getAttribute("style");
                         String hrefValue = aTag.getAttribute("href");
 
-                        String titleValue = aTag.getAttribute("title");
-                        Matcher matcher = pattern.matcher(titleValue);
-                        title = matcher.replaceAll("");
-
-                        CrawledHotel yanolja = new CrawledHotel(title, hrefValue, imageValue, scoreValue);
+                        CrawledHotel yanolja = new CrawledHotel(title);
+                        HotelInfo hotelInfo = new HotelInfo(hrefValue, imageValue, scoreValue);
+                        yanolja.addHotelInfo(hotelInfo);
                         yanoljaHashMap.put(title, yanolja);
                     }
-
-                    String titleValue = aTag.getAttribute("title");
-                    Matcher matcher = pattern.matcher(titleValue);
-                    title = matcher.replaceAll("");
 
                     String price = "";
                     try {
@@ -86,19 +78,19 @@ public class CrawlingYanolja {
                     crawledHotel.addPriceByDate(priceByDate);
                     yanoljaHashMap.put(title, crawledHotel);
                 }
-                bootstrap = Boolean.FALSE;
 
                 Set<String> keys = yanoljaHashMap.keySet();
 
                 // 모든 키와 값을 출력
-                for (String key : keys) {
-                    CrawledHotel value = yanoljaHashMap.get(key);
-                    System.out.println(value.toString());
-                }
+//                for (String key : keys) {
+//                    CrawledHotel value = yanoljaHashMap.get(key);
+//                    System.out.println(value.toString());
+//                }
             } finally {
 //                driver.quit();
             }
         }
         driver.quit();
+        return yanoljaHashMap;
     }
 }
