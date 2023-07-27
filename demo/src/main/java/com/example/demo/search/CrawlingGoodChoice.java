@@ -34,7 +34,7 @@ public class CrawlingGoodChoice {
                         String score = l.getElementsByClass("score").text();
 
                         CrawledHotel goodChoice = new CrawledHotel(title);
-                        HotelInfo hotelInfo = new HotelInfo(href, img, score);
+                        HotelInfo hotelInfo = new HotelInfo("goodChoice", href, img, score);
                         goodChoice.addHotelInfo(hotelInfo);
                         goodChoiceHashMap.put(title, goodChoice);
                     }

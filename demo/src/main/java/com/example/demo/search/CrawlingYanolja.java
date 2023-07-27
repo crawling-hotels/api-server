@@ -58,7 +58,7 @@ public class CrawlingYanolja {
                         String hrefValue = aTag.getAttribute("href");
 
                         CrawledHotel yanolja = new CrawledHotel(title);
-                        HotelInfo hotelInfo = new HotelInfo(hrefValue, imageValue, scoreValue);
+                        HotelInfo hotelInfo = new HotelInfo("yanolja", hrefValue, imageValue, scoreValue);
                         yanolja.addHotelInfo(hotelInfo);
                         yanoljaHashMap.put(title, yanolja);
                     }
