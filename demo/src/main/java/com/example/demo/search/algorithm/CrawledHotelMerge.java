@@ -1,4 +1,8 @@
-package com.example.demo.search;
+package com.example.demo.search.algorithm;
+
+import com.example.demo.search.vo.CrawledHotel;
+import com.example.demo.search.vo.HotelInfo;
+import com.example.demo.search.vo.PriceByDate;
 
 import java.time.LocalDate;
 import java.util.ArrayList;

@@ -1,4 +1,4 @@
-package com.example.demo.search;
+package com.example.demo.search.vo;
 
 import jakarta.persistence.Embeddable;
 import lombok.AccessLevel;

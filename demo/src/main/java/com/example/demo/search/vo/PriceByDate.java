@@ -1,4 +1,4 @@
-package com.example.demo.search;
+package com.example.demo.search.vo;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
 
