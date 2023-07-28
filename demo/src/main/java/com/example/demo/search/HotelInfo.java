@@ -1,11 +1,13 @@
 package com.example.demo.search;
 
+import jakarta.persistence.Embeddable;
 import lombok.AccessLevel;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 
 @Getter
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
+@Embeddable
 public class HotelInfo {
     private String company;
     private String path;

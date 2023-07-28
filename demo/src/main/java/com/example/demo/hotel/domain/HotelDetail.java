@@ -5,16 +5,14 @@ import jakarta.persistence.*;
 import lombok.AccessLevel;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
-import lombok.Setter;
 
 /**
  * 야놀자 Detail, 여기어때 Detail 필요
  */
 @Entity
-@Setter
 @Getter
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
-public class HotelDetail extends HotelInfo {
+public class HotelDetail {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
@@ -23,8 +21,14 @@ public class HotelDetail extends HotelInfo {
     @JoinColumn(name = "hotel_id")
     private Hotel hotel;
 
-    public HotelDetail(String type, String path, String image, String score) {
-        super(type, path, image, score);
+    @Embedded
+    private HotelInfo hotelInfo;
+
+    public HotelDetail(HotelInfo hotelInfo) {
+        this.hotelInfo = hotelInfo;
     }
 
+    public void setHotel(Hotel hotel){
+        this.hotel = hotel;
+    }
 }

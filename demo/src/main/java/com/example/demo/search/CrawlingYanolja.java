@@ -10,6 +10,7 @@ import org.openqa.selenium.support.ui.WebDriverWait;
 
 import java.time.Duration;
 import java.time.LocalDate;
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Set;
@@ -17,6 +18,14 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 public class CrawlingYanolja {
+    public static void main(String[] args){
+        detail("https://place-site.yanolja.com/places/25886",
+                LocalDate.of(2023, 8, 5),
+                LocalDate.of(2023, 8, 10),
+                2L
+        );
+    }
+
     public static HashMap<String, CrawledHotel> search(String keyword, LocalDate startDate, LocalDate endDate, Long day) throws Exception {
         HashMap<String, CrawledHotel> yanoljaHashMap = new HashMap<>();
 
@@ -92,5 +101,64 @@ public class CrawlingYanolja {
         }
         driver.quit();
         return yanoljaHashMap;
+    }
+
+    public static HashMap<String, List<PriceByDate>> detail(String href, LocalDate startDate, LocalDate endDate, Long day){
+        /**
+         * key : 방 이름, value : PriceByDate
+         * 1. keyword 로 Hotel 디비에서 hotelInfos ahref 찾기
+         * 2. 찾아서 detail페이지에서 요청날리기
+         * 3. 방별로 구분해서 가격 그래프 보여주기
+         */
+        HashMap<String, List<PriceByDate>> yanoljaHashMap = new HashMap<>();
+
+        SafariOptions options = new SafariOptions();
+        WebDriver driver = new SafariDriver(new SafariOptions());
+
+        for(LocalDate i = startDate; i.isBefore(endDate.minusDays(day).plusDays(1)); i = i.plusDays(1)) {
+            String url = href + "?checkinDate=" + i.toString() + "&checkoutDate=" + i.plusDays(day).toString() + "&adultPax=2";
+
+            try {
+                driver.get(url);
+                WebDriverWait wait = new WebDriverWait(driver, Duration.ofSeconds(10));
+
+                List<WebElement> webElements = wait.until(ExpectedConditions.presenceOfAllElementsLocatedBy(
+                        By.className("css-d7p7g4")));
+
+                for (WebElement w : webElements) {
+                    //room
+                    String room = w.findElement(By.cssSelector(".css-1ux2lue")).getText();
+
+                    if (!yanoljaHashMap.containsKey(room)) {
+                        List<PriceByDate> priceByDates = new ArrayList<>();
+                        yanoljaHashMap.put(room, priceByDates);
+                    }
+
+                    String price = w.findElement(By.cssSelector(".css-17ymi7c")).getText();
+                    List<PriceByDate> priceByDates = yanoljaHashMap.get(room);
+                    PriceByDate priceByDate = new PriceByDate("yanolja", i.toString(), i.plusDays(day).toString(), price);
+                    priceByDates.add(priceByDate);
+                    yanoljaHashMap.put(room, priceByDates);
+                }
+
+                Set<String> keys = yanoljaHashMap.keySet();
+
+                // 모든 키와 값을 출력
+                for (String key : keys) {
+                    List<PriceByDate> value = yanoljaHashMap.get(key);
+                    String result = key + " ";
+                    for(PriceByDate p : value){
+                        result += p.toString();
+                    }
+                    System.out.println(result);
+                }
+            } finally {
+//                driver.quit();
+            }
+        }
+        driver.quit();
+        return yanoljaHashMap;
+
+
     }
 }
