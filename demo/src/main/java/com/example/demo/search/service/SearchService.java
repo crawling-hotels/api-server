@@ -8,6 +8,8 @@ import com.example.demo.hotel.repository.HotelRepository;
 import com.example.demo.search.CrawledHotel;
 import com.example.demo.search.CrawledHotelMerge;
 import com.example.demo.search.HotelInfo;
+import com.example.demo.search.PriceByDate;
+import jakarta.persistence.EntityManager;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
@@ -17,6 +19,8 @@ import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
+import java.util.Optional;
+import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
@@ -35,7 +39,7 @@ public class SearchService {
                 List<HotelDetail> hotelDetails = new ArrayList<>();
 
                 for(HotelInfo hd: value.getHotelInfos()){
-                    hotelDetails.add(new HotelDetail(hd.getCompany(), hd.getPath(), hd.getImage(), hd.getScore()));
+                    hotelDetails.add(new HotelDetail(hd));
                 }
 
                 Hotel hotel = new Hotel(key);
@@ -47,10 +51,20 @@ public class SearchService {
         return MessageResponse.of(ResponseCodeEnum.HOTEL_SEARCH_SUCCESS, crawling);
     }
 
-//    public MessageResponse<?> detail(String name){
-//        System.out.println("test");
-//
-//        return MessageResponse.of(ResponseCodeEnum.)
-//    }
+    public MessageResponse<HashMap<String, PriceByDate>> detail(String keyword, LocalDate checkinDate, LocalDate checkoutDate, Long day){
+//        Hotel hotel = hotelRepository.findByName(name)
+//                .orElseThrow(() -> throw new )
+
+        Optional<Hotel> optionalHotel = hotelRepository.findByName(keyword);
+        Hotel hotel = optionalHotel.get();
+
+        List<HotelInfo> hotelInfos =
+                hotel.getHotelDetails().stream().map(hotelDetail -> hotelDetail.getHotelInfo()).collect(Collectors.toList());
+
+        HashMap<String, List<PriceByDate>> prices =
+                CrawledHotelMerge.detail(hotelInfos, checkinDate, checkoutDate, day);
+
+        return MessageResponse.of(ResponseCodeEnum.DETAIL_SEARCH_SUCCESS, prices);
+    }
 
 }

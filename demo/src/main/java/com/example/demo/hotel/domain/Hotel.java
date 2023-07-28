@@ -26,7 +26,7 @@ public class Hotel {
     @OneToMany(cascade = CascadeType.PERSIST, mappedBy = "hotel")
     private Collection<Schedule> schedules;
 
-    @OneToMany(cascade = CascadeType.ALL, mappedBy = "hotel")
+    @OneToMany(cascade = CascadeType.PERSIST, mappedBy = "hotel")
     private Collection<HotelDetail> hotelDetails;
 
     public Hotel(String name) {
@@ -34,6 +34,10 @@ public class Hotel {
     }
 
     public void addHotelDetailAll(Collection<HotelDetail> hotelDetails){
+
         this.hotelDetails = hotelDetails;
+        for(HotelDetail hd: hotelDetails){
+            hd.setHotel(this);
+        }
     }
 }
