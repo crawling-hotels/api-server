@@ -1,6 +1,6 @@
 package com.example.demo.hotel.domain;
 
-import com.example.demo.search.HotelInfo;
+import com.example.demo.search.vo.HotelInfo;
 import jakarta.persistence.*;
 import lombok.AccessLevel;
 import lombok.Getter;

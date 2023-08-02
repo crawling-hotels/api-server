@@ -1,5 +1,8 @@
-package com.example.demo.search;
+package com.example.demo.search.algorithm;
 
+import com.example.demo.search.vo.CrawledHotel;
+import com.example.demo.search.vo.HotelInfo;
+import com.example.demo.search.vo.PriceByDate;
 import org.openqa.selenium.By;
 import org.openqa.selenium.WebDriver;
 import org.openqa.selenium.WebElement;
