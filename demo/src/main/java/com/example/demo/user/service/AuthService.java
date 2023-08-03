@@ -18,17 +18,17 @@ import java.util.Map;
 @Service
 @RequiredArgsConstructor
 public class AuthService implements UserDetailsService {
-    private static final Map<String, UserDetails> USERS = new HashMap<>();
+    public static final Map<String, User> USERS = new HashMap<>();
 
     static {
         PasswordEncoder passwordEncoder = new BCryptPasswordEncoder();
 
-        UserDetails user1 = org.springframework.security.core.userdetails.User.withUsername("user1")
-                .password(passwordEncoder.encode("user1Pass"))
-                .roles("USER")
-                .build();
-
-        USERS.put("user1", user1);
+//        UserDetails user1 = org.springframework.security.core.userdetails.User.withUsername("user1")
+//                .password(passwordEncoder.encode("user1Pass"))
+//                .roles("USER")
+//                .build();
+//
+//        USERS.put("user1", user1);
 
         User user2 = User.builder()
                 .username("user2")
