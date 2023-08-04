@@ -4,6 +4,7 @@ import com.example.demo.hotel.domain.Hotel;
 import com.example.demo.hotel.repository.HotelRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.util.Optional;
 
@@ -12,6 +13,7 @@ public class HotelService {
     @Autowired
     private HotelRepository hotelRepository;
 
+    @Transactional
     public Hotel getHotel(String name){
         Optional<Hotel> hotel = hotelRepository.findByName(name);
 

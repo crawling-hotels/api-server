@@ -3,6 +3,7 @@ package com.example.demo.user.domain;
 import com.example.demo.board.domain.Board;
 import com.example.demo.board.domain.Comment;
 import com.example.demo.calendar.domain.Calendar;
+import com.example.demo.favorite.domain.Favorite;
 import jakarta.persistence.*;
 import lombok.AccessLevel;
 import lombok.Builder;
@@ -41,6 +42,9 @@ public class User implements UserDetails {
     @OneToMany(cascade = CascadeType.PERSIST, mappedBy = "user")
     private List<Comment> comments;
 
+    @OneToMany(cascade = {CascadeType.PERSIST, CascadeType.REMOVE}, mappedBy = "user", orphanRemoval = true)
+    private List<Favorite> favorites = new ArrayList<>();
+
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "calendar_id")
     private Calendar calendar;
@@ -48,6 +52,12 @@ public class User implements UserDetails {
     public void setCalendar(Calendar calendar){
         this.calendar = calendar;
     }
+
+    public void addFavorite(Favorite favorite){
+        this.favorites.add(favorite);
+//        favorite.setUser(this);
+    }
+
     @Builder
     public User(String username, String password, String role) {
         this.username = username;

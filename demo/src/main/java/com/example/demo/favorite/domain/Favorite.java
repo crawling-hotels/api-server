@@ -26,4 +26,10 @@ public class Favorite {
         this.user = user;
         this.hotel = hotel;
     }
+
+    public void setUser(User user){
+        this.user = user;
+    }
+
+    public void setHotel(Hotel hotel) { this.hotel = hotel; }
 }
