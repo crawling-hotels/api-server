@@ -38,24 +38,24 @@ public class BoardService {
         var boardDtos = Optional.ofNullable(boards)
                 .orElseGet(() -> new ArrayList<>())
                 .stream()
-                .map(b -> new BoardDto(b.getId(), b.getTitle(), b.getContent(), b.getImagePath()))
+                .map(b -> new BoardDto(b.getId(), b.getTitle(), b.getContent(), b.getImagePath(),
+                    b.getOverallRating(), b.getHygieneScore(), b.getLocationScore(), b.getAmenitiesScore()))
                 .collect(Collectors.toList());
 
         return MessageResponse.of(ResponseCodeEnum.BOARD_SEARCH_SUCCESS, boardDtos);
     }
 
-    public MessageResponse getBoardsByHotelName(String hotelName){
-        var hotel = Optional
-                .ofNullable(hotelRepository.findByName(hotelName))
-                .orElseThrow(() -> new HotelNotFoundException(ResponseCodeEnum.HOTEL_NOT_FOUND.getMessage()))
-                .get();
+    public MessageResponse getBoardsByHotelName(String encoded){
+        var hotel = hotelRepository.findByName(decodeURL(encoded))
+                .orElseThrow(() -> new HotelNotFoundException(ResponseCodeEnum.HOTEL_NOT_FOUND.getMessage()));
 
         var boards = hotel.getBoards();
 
         var boardDtos = Optional.ofNullable(boards)
                 .orElseGet(() -> new ArrayList<>())
                 .stream()
-                .map(b -> new BoardDto(b.getId(), b.getTitle(), b.getContent(), b.getImagePath()))
+                .map(b -> new BoardDto(b.getId(), b.getTitle(), b.getContent(), b.getImagePath(),
+                        b.getOverallRating(), b.getHygieneScore(), b.getLocationScore(), b.getAmenitiesScore()))
                 .collect(Collectors.toList());
 
         return MessageResponse.of(ResponseCodeEnum.BOARD_SEARCH_SUCCESS, boardDtos);
@@ -68,7 +68,8 @@ public class BoardService {
                 .orElseThrow(() -> new HotelNotFoundException(ResponseCodeEnum.HOTEL_NOT_FOUND.getMessage()))
                 .get();
 
-        Board board = new Board(boardDto.getTitle(), boardDto.getContent(), boardDto.getImagePath());
+        Board board = new Board(boardDto.getTitle(), boardDto.getContent(), boardDto.getImagePath(),
+                boardDto.getOverallRating(), boardDto.getHygieneScore(), boardDto.getLocationScore(), boardDto.getAmenitiesScore());
         user.addBoard(board);
         hotel.addBoard(board);
 
