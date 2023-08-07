@@ -52,9 +52,14 @@ public class Board extends BaseEntity {
         this.amenitiesScore = amenitiesScore;
     }
 
-    public void update(String title, String content, String imagePath) {
+    public void update(String title, String content, String imagePath,
+                       double overallRating, double hygieneScore, double locationScore, double amenitiesScore) {
         this.title = title;
         this.content = content;
         this.imagePath = imagePath;
+        this.overallRating = overallRating;
+        this.hygieneScore = hygieneScore;
+        this.locationScore = locationScore;
+        this.amenitiesScore = amenitiesScore;
     }
 }

@@ -36,7 +36,7 @@ public class User implements UserDetails {
     private List<String> roles = new ArrayList<>();
 
     @OneToMany(cascade = CascadeType.PERSIST, mappedBy = "user")
-    private List<Board> boards;
+    private List<Board> boards = new ArrayList<>();
 
     @OneToMany(cascade = {CascadeType.PERSIST, CascadeType.REMOVE}, mappedBy = "user", orphanRemoval = true)
     private List<Favorite> favorites = new ArrayList<>();

@@ -10,6 +10,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.multipart.MultipartFile;
 
 @RestController
 @RequiredArgsConstructor
@@ -31,16 +32,18 @@ public class BoardController {
     @PostMapping("/{hotelName}")
     public ResponseEntity<Void> create(@AuthenticationPrincipal User user,
                                        @RequestBody BoardDto boardDto,
-                                       @PathVariable String hotelName){
-        boardService.createBoard(user, boardDto, hotelName);
+                                       @PathVariable String hotelName,
+                                       @RequestParam(value = "file") MultipartFile file){
+        boardService.createBoard(user, boardDto, hotelName, file);
         return ResponseEntity.noContent().build();
     }
 
     @PutMapping("/{hotelId}")
     public ResponseEntity<Void> update(@AuthenticationPrincipal User user,
                                        @RequestBody BoardDto boardDto,
-                                       @PathVariable Long hotelId){
-        boardService.updateBoard(user, boardDto, hotelId);
+                                       @PathVariable Long hotelId,
+                                       @RequestParam(value = "file", required = false) MultipartFile file){
+        boardService.updateBoard(user, boardDto, hotelId, file);
         return ResponseEntity.noContent().build();
     }
 

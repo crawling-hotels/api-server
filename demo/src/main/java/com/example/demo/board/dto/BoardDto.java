@@ -1,5 +1,6 @@
 package com.example.demo.board.dto;
 
+import lombok.Builder;
 import lombok.Getter;
 
 @Getter
@@ -16,6 +17,7 @@ public class BoardDto {
 
     private double amenitiesScore; // 비품 만족도 점수
 
+    @Builder
     public BoardDto(Long boardId, String title, String content, String imagePath,
                     double overallRating, double hygieneScore, double locationScore, double amenitiesScore) {
         this.boardId = boardId;
