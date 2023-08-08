@@ -66,15 +66,17 @@ public class SecurityConfig {
             .headers(headers -> headers
                     .frameOptions(HeadersConfigurer.FrameOptionsConfig::sameOrigin))
 
-//            .csrf(csrf -> csrf
-//                    .ignoringRequestMatchers(PathRequest.toH2Console())
-//                    .disable()
-//                    //.httpBasic(Customizer.withDefaults())
-//            )
+            .csrf(csrf -> csrf
+                    .ignoringRequestMatchers(PathRequest.toH2Console())
+                    .disable()
+                    //.httpBasic(Customizer.withDefaults())
+            )
+
             .authorizeHttpRequests(authorize -> authorize
                     .requestMatchers("/custom-login-page", "/login/**", "/index", "/custom-login-page.html?error=true").permitAll()
                     .requestMatchers("/search/**").permitAll()
                     .requestMatchers("/detail/**").permitAll()
+                    .requestMatchers("/api/only-test/s3/**").permitAll()
                     .requestMatchers(PathRequest.toH2Console()).permitAll()
                     .anyRequest().authenticated()
             )

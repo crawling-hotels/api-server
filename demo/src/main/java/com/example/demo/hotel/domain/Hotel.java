@@ -48,6 +48,14 @@ public class Hotel {
         favorite.setHotel(this);
     }
 
+    public void addBoard(Board board){
+        if(boards == null){
+            boards = new ArrayList<>();
+        }
+
+        this.boards.add(board);
+    }
+
     public void addHotelDetailAll(Collection<HotelDetail> hotelDetails){
 
         this.hotelDetails = hotelDetails;

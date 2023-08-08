@@ -1,7 +1,6 @@
 package com.example.demo.user.domain;
 
 import com.example.demo.board.domain.Board;
-import com.example.demo.board.domain.Comment;
 import com.example.demo.calendar.domain.Calendar;
 import com.example.demo.favorite.domain.Favorite;
 import jakarta.persistence.*;
@@ -37,10 +36,7 @@ public class User implements UserDetails {
     private List<String> roles = new ArrayList<>();
 
     @OneToMany(cascade = CascadeType.PERSIST, mappedBy = "user")
-    private List<Board> boards;
-
-    @OneToMany(cascade = CascadeType.PERSIST, mappedBy = "user")
-    private List<Comment> comments;
+    private List<Board> boards = new ArrayList<>();
 
     @OneToMany(cascade = {CascadeType.PERSIST, CascadeType.REMOVE}, mappedBy = "user", orphanRemoval = true)
     private List<Favorite> favorites = new ArrayList<>();
@@ -55,7 +51,10 @@ public class User implements UserDetails {
 
     public void addFavorite(Favorite favorite){
         this.favorites.add(favorite);
-//        favorite.setUser(this);
+    }
+
+    public void addBoard(Board board){
+        this.boards.add(board);
     }
 
     @Builder
