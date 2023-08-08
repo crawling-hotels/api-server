@@ -10,6 +10,8 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
+import software.amazon.awssdk.awscore.exception.AwsServiceException;
+import software.amazon.awssdk.core.exception.SdkClientException;
 import software.amazon.awssdk.core.sync.RequestBody;
 import software.amazon.awssdk.services.s3.S3Client;
 import software.amazon.awssdk.services.s3.model.DeleteObjectRequest;
@@ -53,7 +55,11 @@ public class S3ImageService {
                             .contentType(multipartFile.getContentType())
                             .build(), RequestBody.fromBytes(fileBytes));
 
-            String fileUrl = s3Client.utilities().getUrl(builder -> builder.bucket(bucketName).key(fileName)).toExternalForm();
+            String fileUrl = s3Client.utilities()
+                    .getUrl(builder -> builder
+                        .bucket(bucketName)
+                        .key(fileName))
+                    .toExternalForm();
 
             return fileUrl;
         }catch (IOException | S3Exception e){
@@ -63,17 +69,15 @@ public class S3ImageService {
 
     @Transactional
     public void deleteFileV1(String imagePath){
-        s3Client.deleteObject(DeleteObjectRequest.builder()
-                        .bucket(bucketName)
-                        .key(imagePath)
-                        .build());
-    }
+        String objectKey = fileNameExtractor(imagePath);
 
-    private String encodeURL(String input){
         try {
-            return URLEncoder.encode(input, "UTF-8");
-        } catch (UnsupportedEncodingException e) {
-            throw new URLEncodeFailException(ResponseCodeEnum.URL_ENCODE_FAILED.getMessage());
+            s3Client.deleteObject(DeleteObjectRequest.builder()
+                    .bucket(bucketName)
+                    .key(objectKey)
+                    .build());
+        }catch (AwsServiceException | SdkClientException e){
+            throw new ImageFileDeleteFailedException(e.getMessage());
         }
     }
 
@@ -91,28 +95,6 @@ public class S3ImageService {
         }
     }
 
-    private File convertMultipartFileToFile(MultipartFile multipartFile){
-        try {
-            File file = new File(multipartFile.getOriginalFilename());
-            multipartFile.transferTo(file);
-
-            return file;
-        }catch (IOException e) {
-            throw new ImageFileConvertException(ResponseCodeEnum.IMAGE_CONVERT_FAILED.getMessage());
-        }
-    }
-
-    private String extractObjectKeyFromImagePath(String imagePath){
-        Pattern pattern = Pattern.compile("/review/(.*)");
-        Matcher matcher = pattern.matcher(imagePath);
-
-        if (matcher.find()) {
-            return matcher.group(1);
-        }
-
-        throw new ImagePathExtractFailException(ResponseCodeEnum.IMAGE_PATH_EXTRACT_FAILED.getMessage());
-    }
-
     private static final String FILE_EXTENSION_SEPARATOR = ".";
 
     private String buildFileName(String originalFileName){
@@ -122,5 +104,17 @@ public class S3ImageService {
         String now = String.valueOf(System.currentTimeMillis());
 
         return fileName + now + fileExtension;
+    }
+
+    private String fileNameExtractor(String imagePath){
+        try {
+            URL fileUrl = new URL(imagePath);
+            String decodedPath = URLDecoder.decode(fileUrl.getPath(), "UTF-8");
+            String[] pathSegments = decodedPath.split("/");
+            String fileName = pathSegments[pathSegments.length - 1];
+            return fileName;
+        } catch (MalformedURLException | UnsupportedEncodingException e) {
+            throw new ImagePathExtractFailException(ResponseCodeEnum.IMAGE_PATH_EXTRACT_FAILED.getMessage());
+        }
     }
 }
