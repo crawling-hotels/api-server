@@ -1,8 +1,5 @@
 package com.example.demo.board.service;
 
-import com.amazonaws.services.s3.AmazonS3;
-import com.amazonaws.services.s3.model.DeleteObjectRequest;
-import com.amazonaws.services.s3.model.PutObjectRequest;
 import com.example.demo.board.domain.Board;
 import com.example.demo.board.dto.BoardDto;
 import com.example.demo.board.exception.*;
@@ -11,12 +8,15 @@ import com.example.demo.common.constant.ResponseCodeEnum;
 import com.example.demo.common.dto.MessageResponse;
 import com.example.demo.hotel.domain.Hotel;
 import com.example.demo.hotel.repository.HotelRepository;
+import com.example.demo.image.exception.ImageExtensionNotSupportException;
+import com.example.demo.image.exception.ImageFileConvertException;
+import com.example.demo.image.exception.ImagePathExtractFailException;
+import com.example.demo.image.service.S3ImageService;
 import com.example.demo.search.exception.HotelNotFoundException;
 import com.example.demo.user.domain.User;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.http.ResponseEntity;
 import org.springframework.lang.Nullable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -38,18 +38,13 @@ import java.util.stream.Collectors;
 @RequiredArgsConstructor
 public class BoardService {
     @Autowired
+    private S3ImageService s3ImageService;
+
+    @Autowired
     private BoardRepository boardRepository;
 
     @Autowired
     private HotelRepository hotelRepository;
-
-    @Value("${cloud.aws.s3.bucket}")
-    private String bucketName;
-
-    private final static String objectFolder = "review";
-
-    @Autowired
-    private AmazonS3 s3Client;
 
     @Transactional(readOnly = true)
     public MessageResponse getBoardsByUser(User user){
@@ -84,17 +79,7 @@ public class BoardService {
 
     @Transactional
     public void createBoard(User user, BoardDto boardDto, String encoded, MultipartFile multipartFile){
-        if (!isValidImageExtension(multipartFile.getOriginalFilename())) {
-            throw new ImageExtensionNotSupportException(ResponseCodeEnum.IMAGE_EXTENSION_NOT_SUPPORT.getMessage());
-        }
-
-        String encodedFileName = encodeURL(multipartFile.getOriginalFilename());
-
-        File file = convertMultipartFileToFile(multipartFile);
-
-        s3Client.putObject(new PutObjectRequest(bucketName, objectFolder + "/" + encodedFileName, file));
-
-        file.delete();
+        String imagePath = s3ImageService.uploadFileV1(multipartFile);
 
         Hotel hotel = hotelRepository.findByName(decodeURL(encoded))
                 .orElseThrow(() -> new HotelNotFoundException(ResponseCodeEnum.HOTEL_NOT_FOUND.getMessage()));
@@ -102,7 +87,7 @@ public class BoardService {
         Board board = new Board(
                 boardDto.getTitle(),
                 boardDto.getContent(),
-                "https://" + bucketName + ".s3.amazonaws.com/" + objectFolder + "/" + encodedFileName,
+                imagePath,
                 boardDto.getOverallRating(),
                 boardDto.getHygieneScore(),
                 boardDto.getLocationScore(),
@@ -119,32 +104,29 @@ public class BoardService {
         Board board = boardRepository.findById(boardId)
                 .orElseThrow(() -> new BoardNotFoundException(ResponseCodeEnum.BOARD_NOT_FOUND.getMessage()));
 
+        String imagePath = boardDto.getImagePath();
+
         if(board.getUser() != user){
             throw new WriterNotSameException(ResponseCodeEnum.BOARD_WRITER_NOT_SAME.getMessage());
         }
 
         if (multipartFile != null && !multipartFile.isEmpty()) {
             if(boardDto.getImagePath() != null){
-                String objectKey = extractObjectKeyFromImagePath(board.getImagePath());
-                DeleteObjectRequest deleteObjectRequest = new DeleteObjectRequest(bucketName, objectFolder + "/" + objectKey);
-                s3Client.deleteObject(deleteObjectRequest);
+                s3ImageService.deleteFileV1(imagePath);
             }
 
-            if (!isValidImageExtension(multipartFile.getOriginalFilename())) {
-                throw new ImageExtensionNotSupportException(ResponseCodeEnum.IMAGE_EXTENSION_NOT_SUPPORT.getMessage());
-            }
-
-            String encodedFileName = encodeURL(multipartFile.getOriginalFilename());
-
-            File file = convertMultipartFileToFile(multipartFile);
-
-            s3Client.putObject(new PutObjectRequest(bucketName, "review/" + encodedFileName, file));
-
-            file.delete();
+            imagePath = s3ImageService.uploadFileV1(multipartFile);
         }
 
-        board.update(board.getTitle(), boardDto.getContent(), boardDto.getImagePath(),
-                boardDto.getOverallRating(), boardDto.getHygieneScore(), boardDto.getLocationScore(), boardDto.getAmenitiesScore());
+        board.update(
+                board.getTitle(),
+                boardDto.getContent(),
+                imagePath,
+                boardDto.getOverallRating(),
+                boardDto.getHygieneScore(),
+                boardDto.getLocationScore(),
+                boardDto.getAmenitiesScore()
+        );
         boardRepository.save(board);
     }
 
@@ -160,9 +142,7 @@ public class BoardService {
         }
 
         if(board.getImagePath() != null){
-            String objectKey = extractObjectKeyFromImagePath(board.getImagePath());
-            DeleteObjectRequest deleteObjectRequest = new DeleteObjectRequest(bucketName, objectFolder + "/" + objectKey);
-            s3Client.deleteObject(deleteObjectRequest);
+            s3ImageService.deleteFileV1(board.getImagePath());
         }
 
         user.getBoards().remove(board);
@@ -178,41 +158,4 @@ public class BoardService {
             throw new URLDecodeFailException(ResponseCodeEnum.URL_DECODE_FAILED.getMessage());
         }
     }
-
-    private String encodeURL(String input){
-        try {
-            return URLEncoder.encode(input, "UTF-8");
-        } catch (UnsupportedEncodingException e) {
-            throw new URLEncodeFailException(ResponseCodeEnum.URL_ENCODE_FAILED.getMessage());
-        }
-    }
-
-    private boolean isValidImageExtension(String filename) {
-        String[] allowedExtensions = { "jpg", "jpeg", "png" };
-        String extension = filename.substring(filename.lastIndexOf(".") + 1).toLowerCase();
-        return Arrays.asList(allowedExtensions).contains(extension);
-    }
-
-    private File convertMultipartFileToFile(MultipartFile multipartFile){
-        try {
-            File file = new File(multipartFile.getOriginalFilename());
-            multipartFile.transferTo(file);
-
-            return file;
-        }catch (IOException e) {
-            throw new ImageFileConvertException(ResponseCodeEnum.IMAGE_CONVERT_FAILED.getMessage());
-        }
-    }
-
-    private String extractObjectKeyFromImagePath(String imagePath){
-        Pattern pattern = Pattern.compile("/review/(.*)");
-        Matcher matcher = pattern.matcher(imagePath);
-
-        if (matcher.find()) {
-            return matcher.group(1);
-        }
-
-        throw new ImagePathExtractFailException(ResponseCodeEnum.IMAGE_PATH_EXTRACT_FAILED.getMessage());
-    }
-
 }

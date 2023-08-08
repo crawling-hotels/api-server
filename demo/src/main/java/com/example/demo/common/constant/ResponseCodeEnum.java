@@ -14,6 +14,7 @@ public enum ResponseCodeEnum {
     IMAGE_EXTENSION_NOT_SUPPORT("이미지가 아닌 파일을 서비스에서 저장/조회 할 수 없습니다.", -1),
     IMAGE_CONVERT_FAILED("이미지를 서버에서 저장하는 것을 실패하였습니다.", -1),
     IMAGE_PATH_EXTRACT_FAILED("저장된 이미지 주소를 추출하는데 실패하였습니다.", -1),
+    IMAGE_NOT_EXIST("해당 이미지를 업로드하는데 실패했습니다.", -1),
     FAVORITE_NOT_FOUND("해당 id를 가진 찜하기를 찾을 수 없습니다.", -1),
     BOARD_NOT_FOUND("해당 id를 가진 리뷰를 찾을 수 없습니다.", -1),
     BOARD_WRITER_NOT_SAME("해당 리뷰를 작성한 게시자가 아닙니다.", -1),

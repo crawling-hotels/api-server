@@ -1,11 +1,11 @@
 package com.example.demo.util.exception.handler;
 
-import com.example.demo.board.exception.ImageExtensionNotSupportException;
-import com.example.demo.board.exception.ImageFileConvertException;
-import com.example.demo.board.exception.ImagePathExtractFailException;
+import com.example.demo.image.exception.ImageExtensionNotSupportException;
+import com.example.demo.image.exception.ImageFileConvertException;
+import com.example.demo.image.exception.ImageFileUploadFailedException;
+import com.example.demo.image.exception.ImagePathExtractFailException;
 import com.example.demo.board.exception.URLDecodeFailException;
 import com.example.demo.calendar.exception.ScheduleNotFoundException;
-import com.example.demo.common.constant.ResponseCodeEnum;
 import com.example.demo.common.dto.MessageResponse;
 import com.example.demo.favorite.exception.FavoriteNotFoundException;
 import com.example.demo.search.exception.HotelNotFoundException;
@@ -25,7 +25,8 @@ public class GlobalExceptionHandler {
             URLDecodeFailException.class,
             ImageExtensionNotSupportException.class,
             ImageFileConvertException.class,
-            ImagePathExtractFailException.class
+            ImagePathExtractFailException.class,
+            ImageFileUploadFailedException.class
     })
     public ResponseEntity<MessageResponse> handleBadRequest(RuntimeException e) {
         MessageResponse message =
