@@ -56,6 +56,14 @@ public class Hotel {
         this.boards.add(board);
     }
 
+    public void addSchedule(Schedule schedule){
+        if(schedules == null){
+            schedules = new ArrayList<>();
+        }
+
+        this.schedules.add(schedule);
+    }
+
     public void addHotelDetailAll(Collection<HotelDetail> hotelDetails){
 
         this.hotelDetails = hotelDetails;
