@@ -5,6 +5,7 @@ import com.example.demo.search.vo.HotelInfo;
 import com.example.demo.search.vo.PriceByDate;
 
 import java.time.LocalDate;
+import java.time.temporal.ChronoUnit;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -12,6 +13,7 @@ import java.util.Map;
 import java.util.concurrent.*;
 
 public class CrawledHotelMerge {
+    private static int MAX_REQUEST_THREAD_NUM = 5;
 
     public static void main(String[] args){
         String keyword = "광주";
@@ -29,15 +31,37 @@ public class CrawledHotelMerge {
 
     public static HashMap<String, CrawledHotel> search(String keyword, LocalDate startDate, LocalDate endDate, Long day){
         try {
-            ExecutorService executorService = Executors.newFixedThreadPool(2);
+            ExecutorService executorService = Executors.newCachedThreadPool();
 
             List<Future<HashMap<String, CrawledHotel>>> futures = new ArrayList<>();
 
-            futures.add(executorService.submit(() -> CrawlingGoodChoice.search(keyword, startDate, endDate, day)));
-            futures.add(executorService.submit(() -> CrawlingYanolja.search(keyword, startDate, endDate, day)));
+            int[] daysSuitableDatesPerThread = assignSuitableDates(startDate, endDate, day);
+            for(int i = 0; i < MAX_REQUEST_THREAD_NUM; i++){
+                System.out.println("daysSuitableDatesPerThread[" + i + "] : " + daysSuitableDatesPerThread[i]);
+            }
+//            futures.add(executorService.submit(() -> CrawlingGoodChoice.search(keyword, startDate, endDate, day)));
+//            futures.add(executorService.submit(() -> CrawlingGoodChoice.search(keyword, startDate, endDate, day)));
+//            futures.add(executorService.submit(() -> CrawlingGoodChoice.search(keyword, startDate, endDate, day)));
+//            futures.add(executorService.submit(() -> CrawlingYanolja.search(keyword, startDate, endDate, day)));
+//            futures.add(executorService.submit(() -> CrawlingYanolja.search(keyword, startDate, endDate, day)));
+//            futures.add(executorService.submit(() -> CrawlingYanolja.search(keyword, startDate, endDate, day)));
+
+            LocalDate tempStartDate = startDate;
+            LocalDate tempEndDate = endDate;
+            for(int i = 0; i < MAX_REQUEST_THREAD_NUM; i++) {
+                if(daysSuitableDatesPerThread[i] == 0)
+                    break;
+                tempEndDate = tempStartDate.plusDays(day - 1).plusDays(daysSuitableDatesPerThread[i] - 1);
+                LocalDate finalTempStartDate = tempStartDate;
+                LocalDate finalTempEndDate = tempEndDate;
+                System.out.println("start : " + finalTempStartDate + " end : " + finalTempEndDate);
+                futures.add(executorService.submit(() -> CrawlingGoodChoice.search(keyword, finalTempStartDate, finalTempEndDate, day)));
+                futures.add(executorService.submit(() -> CrawlingYanolja.search(keyword, finalTempStartDate, finalTempEndDate, day)));
+                tempStartDate = tempEndDate.minusDays(1);
+            }
 
             executorService.shutdown();
-            executorService.awaitTermination(Long.MAX_VALUE, TimeUnit.NANOSECONDS);
+            executorService.awaitTermination(Long.MAX_VALUE, TimeUnit.SECONDS);
 
             HashMap<String, CrawledHotel> mergedHashMap = new HashMap<>();
             for (Future<HashMap<String, CrawledHotel>> future : futures) {
@@ -128,5 +152,23 @@ public class CrawledHotelMerge {
                 mergedHashMap.put(entry.getKey(), value);
             }
         }
+    }
+
+    private static int[] assignSuitableDates(LocalDate startDate, LocalDate endDate, Long day){
+        //  60일을 최대로 한다고 가정하고 6개의 스레드를 최대로 하자.
+        int[] daysSuitableDatesPerThread = new int[MAX_REQUEST_THREAD_NUM];
+
+        long daysBetween = ChronoUnit.DAYS.between(startDate, endDate) + 1;
+        long daysToRequest = daysBetween - day + 1;
+
+        for(int i = 0; i < MAX_REQUEST_THREAD_NUM; i++){
+            daysSuitableDatesPerThread[i] = (int) (daysToRequest / MAX_REQUEST_THREAD_NUM);
+        }
+
+        for(int i = 0; i < (int) (daysToRequest % MAX_REQUEST_THREAD_NUM); i++){
+            daysSuitableDatesPerThread[i] += 1;
+        }
+
+        return daysSuitableDatesPerThread;
     }
 }

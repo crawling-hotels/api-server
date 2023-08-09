@@ -6,6 +6,8 @@ import com.example.demo.search.vo.PriceByDate;
 import org.openqa.selenium.By;
 import org.openqa.selenium.WebDriver;
 import org.openqa.selenium.WebElement;
+import org.openqa.selenium.chrome.ChromeDriver;
+import org.openqa.selenium.chrome.ChromeOptions;
 import org.openqa.selenium.safari.SafariDriver;
 import org.openqa.selenium.safari.SafariOptions;
 import org.openqa.selenium.support.ui.ExpectedConditions;
@@ -32,11 +34,13 @@ public class CrawlingYanolja {
     public static HashMap<String, CrawledHotel> search(String keyword, LocalDate startDate, LocalDate endDate, Long day) throws Exception {
         HashMap<String, CrawledHotel> yanoljaHashMap = new HashMap<>();
 
-        SafariOptions options = new SafariOptions();
-        WebDriver driver = new SafariDriver(new SafariOptions());
+//        SafariOptions options = new SafariOptions();
+//        WebDriver driver = new SafariDriver(new SafariOptions());
+        ChromeOptions chromeOptions = new ChromeOptions();
+        chromeOptions.setBrowserVersion("115");
+        WebDriver driver = new ChromeDriver(chromeOptions);
 
         for(LocalDate i = startDate; i.isBefore(endDate.minusDays(day).plusDays(1)); i = i.plusDays(1)) {
-
 
             String url = "https://www.yanolja.com/search/" + keyword +
                     "?keyword=" + keyword +

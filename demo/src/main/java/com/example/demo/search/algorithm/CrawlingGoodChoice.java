@@ -10,15 +10,18 @@ import org.jsoup.select.Elements;
 
 import java.io.IOException;
 import java.time.LocalDate;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Set;
+import java.util.*;
 
 public class CrawlingGoodChoice {
     public static void main(String[] args){
 //        https://www.goodchoice.kr/product/detail?ano=65814&adcno=2&sel_date=2023-07-28&sel_date2=2023-07-29
-        detail("https://www.goodchoice.kr/product/detail?ano=65814&adcno=2",
+//        detail("https://www.goodchoice.kr/product/detail?ano=65814&adcno=2",
+//                LocalDate.of(2023, 8, 5),
+//                LocalDate.of(2023, 8, 10),
+//                2L
+//        );
+
+        search("강릉",
                 LocalDate.of(2023, 8, 5),
                 LocalDate.of(2023, 8, 10),
                 2L
@@ -52,7 +55,10 @@ public class CrawlingGoodChoice {
                         goodChoiceHashMap.put(title, goodChoice);
                     }
 
-                    String price = l.select("b[style=\"color: rgba(0,0,0,1);\"]").first().text();
+                    String price = Optional
+                            .ofNullable(l.select("b[style=\"color: rgba(0,0,0,1);\"]").first())
+                            .map(Element::text)
+                            .orElse(null);
                     CrawledHotel crawledHotel = goodChoiceHashMap.get(title);
                     PriceByDate priceByDate = new PriceByDate("goodChoice", i.toString(), i.plusDays(day).toString(), price);
                     crawledHotel.addPriceByDate(priceByDate);
