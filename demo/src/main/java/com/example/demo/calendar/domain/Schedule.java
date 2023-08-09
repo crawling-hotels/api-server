@@ -2,10 +2,15 @@ package com.example.demo.calendar.domain;
 
 import com.example.demo.hotel.domain.Hotel;
 import jakarta.persistence.*;
+import lombok.AccessLevel;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
 
 import java.time.LocalDate;
 
 @Entity
+@Getter
+@NoArgsConstructor(access = AccessLevel.PROTECTED)
 public class Schedule {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -25,4 +30,10 @@ public class Schedule {
 
     @Column(nullable = false)
     private LocalDate checkoutDate;
+
+    public Schedule(Hotel hotel, LocalDate checkinDate, LocalDate checkoutDate) {
+        this.hotel = hotel;
+        this.checkinDate = checkinDate;
+        this.checkoutDate = checkoutDate;
+    }
 }

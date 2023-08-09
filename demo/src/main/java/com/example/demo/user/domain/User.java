@@ -41,7 +41,7 @@ public class User implements UserDetails {
     @OneToMany(cascade = {CascadeType.PERSIST, CascadeType.REMOVE}, mappedBy = "user", orphanRemoval = true)
     private List<Favorite> favorites = new ArrayList<>();
 
-    @ManyToOne(fetch = FetchType.LAZY)
+    @ManyToOne(fetch = FetchType.LAZY, cascade = CascadeType.PERSIST)
     @JoinColumn(name = "calendar_id")
     private Calendar calendar;
 
