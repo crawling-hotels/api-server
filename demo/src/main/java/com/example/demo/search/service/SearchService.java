@@ -27,9 +27,12 @@ public class SearchService {
     @Autowired
     private HotelRepository hotelRepository;
 
+    @Autowired
+    private CrawledHotelMerge crawledHotelMerge;
+
     @Transactional
     public MessageResponse<HashMap<String, CrawledHotel>> search(String keyword, LocalDate startDate, LocalDate endDate, Long day) {
-        HashMap<String, CrawledHotel> crawling = CrawledHotelMerge.search(keyword, startDate, endDate, day);
+        HashMap<String, CrawledHotel> crawling = crawledHotelMerge.search(keyword, startDate, endDate, day);
 
         for(String key : crawling.keySet()){
             if(!hotelRepository.existsByName(key)){

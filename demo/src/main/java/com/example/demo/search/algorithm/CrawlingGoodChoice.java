@@ -8,11 +8,13 @@ import org.jsoup.nodes.Document;
 import org.jsoup.nodes.Element;
 import org.jsoup.select.Elements;
 import org.springframework.cache.annotation.Cacheable;
+import org.springframework.stereotype.Component;
 
 import java.io.IOException;
 import java.time.LocalDate;
 import java.util.*;
 
+@Component
 public class CrawlingGoodChoice {
     public static void main(String[] args){
 //        https://www.goodchoice.kr/product/detail?ano=65814&adcno=2&sel_date=2023-07-28&sel_date2=2023-07-29
@@ -29,8 +31,8 @@ public class CrawlingGoodChoice {
 //        );
     }
 
-//    @Cacheable(value = "search", key = "{#keyword, #startDate, #endDate, #day}")
-    public static HashMap<String, CrawledHotel> search(String keyword, LocalDate startDate, LocalDate endDate, Long day) {
+    @Cacheable(cacheNames = "search_goodChoice", key = "{#keyword, #startDate, #endDate, #day, 'goodChoice'}", sync = true)
+    public HashMap<String, CrawledHotel> search(String keyword, LocalDate startDate, LocalDate endDate, Long day) {
         HashMap<String, CrawledHotel> goodChoiceHashMap = new HashMap<>();
 
 

@@ -12,18 +12,28 @@ import org.openqa.selenium.safari.SafariDriver;
 import org.openqa.selenium.safari.SafariOptions;
 import org.openqa.selenium.support.ui.ExpectedConditions;
 import org.openqa.selenium.support.ui.WebDriverWait;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.cache.Cache;
+import org.springframework.cache.CacheManager;
 import org.springframework.cache.annotation.Cacheable;
+import org.springframework.context.annotation.Bean;
+import org.springframework.stereotype.Component;
 
 import java.time.Duration;
 import java.time.LocalDate;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Set;
+import java.util.*;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
+@Component
 public class CrawlingYanolja {
+    private CacheManager cacheManager;
+
+    @Autowired
+    public CrawlingYanolja(CacheManager cacheManager) {
+        this.cacheManager = cacheManager;
+    }
+
     public static void main(String[] args){
         detail("https://place-site.yanolja.com/places/25886",
                 LocalDate.of(2023, 8, 5),
@@ -32,8 +42,8 @@ public class CrawlingYanolja {
         );
     }
 
-//    @Cacheable(value = "search", key = "{#keyword, #startDate, #endDate, #day}")
-    public static HashMap<String, CrawledHotel> search(String keyword, LocalDate startDate, LocalDate endDate, Long day) throws Exception {
+    @Cacheable(value = "search_yanolja", key = "{#keyword, #startDate, #endDate, #day, 'yanolja'}", sync = true)
+    public HashMap<String, CrawledHotel> search(String keyword, LocalDate startDate, LocalDate endDate, Long day) throws Exception {
         HashMap<String, CrawledHotel> yanoljaHashMap = new HashMap<>();
 
 //        SafariOptions options = new SafariOptions();
@@ -111,6 +121,7 @@ public class CrawlingYanolja {
             }
         }
         driver.quit();
+
         return yanoljaHashMap;
     }
 

@@ -3,6 +3,8 @@ package com.example.demo.search.algorithm;
 import com.example.demo.search.vo.CrawledHotel;
 import com.example.demo.search.vo.HotelInfo;
 import com.example.demo.search.vo.PriceByDate;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Component;
 
 import java.time.LocalDate;
 import java.time.temporal.ChronoUnit;
@@ -12,24 +14,32 @@ import java.util.List;
 import java.util.Map;
 import java.util.concurrent.*;
 
+@Component
 public class CrawledHotelMerge {
     private static int MAX_REQUEST_THREAD_NUM = 3;
+    private final CrawlingYanolja crawlingYanolja;
+    private final CrawlingGoodChoice crawlingGoodChoice;
 
-    public static void main(String[] args){
-        String keyword = "광주";
-        LocalDate startDate = LocalDate.of(2023, 8, 1);
-        LocalDate endDate = LocalDate.of(2023, 8, 3);
-        Long day = 2L;
-
-        HashMap<String, CrawledHotel> result = search(keyword, startDate, endDate, day);
-
-        for (String key : result.keySet()) {
-            CrawledHotel value = result.get(key);
-            System.out.println(value.toString());
-        }
+    public CrawledHotelMerge(CrawlingYanolja crawlingYanolja, CrawlingGoodChoice crawlingGoodChoice) {
+        this.crawlingYanolja = crawlingYanolja;
+        this.crawlingGoodChoice = crawlingGoodChoice;
     }
 
-    public static HashMap<String, CrawledHotel> search(String keyword, LocalDate startDate, LocalDate endDate, Long day){
+    public static void main(String[] args){
+//        String keyword = "광주";
+//        LocalDate startDate = LocalDate.of(2023, 8, 1);
+//        LocalDate endDate = LocalDate.of(2023, 8, 3);
+//        Long day = 2L;
+//
+//        HashMap<String, CrawledHotel> result = search(keyword, startDate, endDate, day);
+//
+//        for (String key : result.keySet()) {
+//            CrawledHotel value = result.get(key);
+//            System.out.println(value.toString());
+//        }
+    }
+
+    public HashMap<String, CrawledHotel> search(String keyword, LocalDate startDate, LocalDate endDate, Long day){
         try {
             ExecutorService executorService = Executors.newCachedThreadPool();
 
@@ -57,8 +67,8 @@ public class CrawledHotelMerge {
                 LocalDate finalTempStartDate = tempStartDate;
                 LocalDate finalTempEndDate = tempEndDate;
                 System.out.println("start : " + finalTempStartDate + " end : " + finalTempEndDate);
-                futures.add(executorService.submit(() -> CrawlingGoodChoice.search(keyword, finalTempStartDate, finalTempEndDate, day)));
-                futures.add(executorService.submit(() -> CrawlingYanolja.search(keyword, finalTempStartDate, finalTempEndDate, day)));
+                futures.add(executorService.submit(() -> crawlingGoodChoice.search(keyword, finalTempStartDate, finalTempEndDate, day)));
+                futures.add(executorService.submit(() -> crawlingYanolja.search(keyword, finalTempStartDate, finalTempEndDate, day)));
                 tempStartDate = tempEndDate.minusDays(1);
             }
 
