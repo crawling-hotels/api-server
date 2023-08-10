@@ -13,7 +13,7 @@ import java.util.Map;
 import java.util.concurrent.*;
 
 public class CrawledHotelMerge {
-    private static int MAX_REQUEST_THREAD_NUM = 5;
+    private static int MAX_REQUEST_THREAD_NUM = 3;
 
     public static void main(String[] args){
         String keyword = "광주";
@@ -36,22 +36,24 @@ public class CrawledHotelMerge {
             List<Future<HashMap<String, CrawledHotel>>> futures = new ArrayList<>();
 
             int[] daysSuitableDatesPerThread = assignSuitableDates(startDate, endDate, day);
-            for(int i = 0; i < MAX_REQUEST_THREAD_NUM; i++){
-                System.out.println("daysSuitableDatesPerThread[" + i + "] : " + daysSuitableDatesPerThread[i]);
-            }
-//            futures.add(executorService.submit(() -> CrawlingGoodChoice.search(keyword, startDate, endDate, day)));
-//            futures.add(executorService.submit(() -> CrawlingGoodChoice.search(keyword, startDate, endDate, day)));
-//            futures.add(executorService.submit(() -> CrawlingGoodChoice.search(keyword, startDate, endDate, day)));
-//            futures.add(executorService.submit(() -> CrawlingYanolja.search(keyword, startDate, endDate, day)));
-//            futures.add(executorService.submit(() -> CrawlingYanolja.search(keyword, startDate, endDate, day)));
-//            futures.add(executorService.submit(() -> CrawlingYanolja.search(keyword, startDate, endDate, day)));
+//            for(int i = 0; i < MAX_REQUEST_THREAD_NUM; i++){
+//                System.out.println("daysSuitableDatesPerThread[" + i + "] : " + daysSuitableDatesPerThread[i]);
+//            }
 
             LocalDate tempStartDate = startDate;
             LocalDate tempEndDate = endDate;
             for(int i = 0; i < MAX_REQUEST_THREAD_NUM; i++) {
+//                System.out.println(i);
                 if(daysSuitableDatesPerThread[i] == 0)
-                    break;
+                    continue;
+                /**
+                 * 1 2 3 4 5 6 7 , day : 3, thread : 3
+                 * 1 2 3 4 startday : 1 + day : 3 - 1 = 3. 3 + daySuitableDatesPerThread[i] : 2 - 1 = 4
+                 * 3 4 5 6 startday : 4 - 1 = 3.
+                 * 5 6 7
+                 */
                 tempEndDate = tempStartDate.plusDays(day - 1).plusDays(daysSuitableDatesPerThread[i] - 1);
+
                 LocalDate finalTempStartDate = tempStartDate;
                 LocalDate finalTempEndDate = tempEndDate;
                 System.out.println("start : " + finalTempStartDate + " end : " + finalTempEndDate);
@@ -162,6 +164,7 @@ public class CrawledHotelMerge {
         long daysToRequest = daysBetween - day + 1;
 
         for(int i = 0; i < MAX_REQUEST_THREAD_NUM; i++){
+//            System.out.println(daysToRequest);
             daysSuitableDatesPerThread[i] = (int) (daysToRequest / MAX_REQUEST_THREAD_NUM);
         }
 

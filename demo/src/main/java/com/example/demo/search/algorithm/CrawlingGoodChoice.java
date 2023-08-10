@@ -7,6 +7,7 @@ import org.jsoup.Jsoup;
 import org.jsoup.nodes.Document;
 import org.jsoup.nodes.Element;
 import org.jsoup.select.Elements;
+import org.springframework.cache.annotation.Cacheable;
 
 import java.io.IOException;
 import java.time.LocalDate;
@@ -21,22 +22,23 @@ public class CrawlingGoodChoice {
 //                2L
 //        );
 
-        search("강릉",
-                LocalDate.of(2023, 8, 5),
-                LocalDate.of(2023, 8, 10),
-                2L
-        );
+//        search("강릉",
+//                LocalDate.of(2023, 8, 5),
+//                LocalDate.of(2023, 8, 10),
+//                2L
+//        );
     }
 
+//    @Cacheable(value = "search", key = "{#keyword, #startDate, #endDate, #day}")
     public static HashMap<String, CrawledHotel> search(String keyword, LocalDate startDate, LocalDate endDate, Long day) {
         HashMap<String, CrawledHotel> goodChoiceHashMap = new HashMap<>();
 
 
-        for (LocalDate i = startDate; i.isBefore(endDate.minusDays(day).plusDays(1)); i = i.plusDays(1)) {
+        for (LocalDate i = startDate; i.isBefore(endDate.minusDays(day).plusDays(1).plusDays(1)); i = i.plusDays(1)) {
             try {
                 Document document = Jsoup.connect("https://www.goodchoice.kr/product/result?" +
                                 "sel_date=" + i.toString() +
-                                "&sel_date2=" + i.plusDays(day).toString() +
+                                "&sel_date2=" + i.plusDays(day).minusDays(1).toString() +
                                 "&keyword=" + keyword)
                         .get();
 

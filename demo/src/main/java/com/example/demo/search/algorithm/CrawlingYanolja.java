@@ -12,6 +12,7 @@ import org.openqa.selenium.safari.SafariDriver;
 import org.openqa.selenium.safari.SafariOptions;
 import org.openqa.selenium.support.ui.ExpectedConditions;
 import org.openqa.selenium.support.ui.WebDriverWait;
+import org.springframework.cache.annotation.Cacheable;
 
 import java.time.Duration;
 import java.time.LocalDate;
@@ -31,6 +32,7 @@ public class CrawlingYanolja {
         );
     }
 
+//    @Cacheable(value = "search", key = "{#keyword, #startDate, #endDate, #day}")
     public static HashMap<String, CrawledHotel> search(String keyword, LocalDate startDate, LocalDate endDate, Long day) throws Exception {
         HashMap<String, CrawledHotel> yanoljaHashMap = new HashMap<>();
 
@@ -40,20 +42,22 @@ public class CrawlingYanolja {
         chromeOptions.setBrowserVersion("115");
         WebDriver driver = new ChromeDriver(chromeOptions);
 
-        for(LocalDate i = startDate; i.isBefore(endDate.minusDays(day).plusDays(1)); i = i.plusDays(1)) {
+        for(LocalDate i = startDate; i.isBefore(endDate.minusDays(day).plusDays(1).plusDays(1)); i = i.plusDays(1)) {
 
             String url = "https://www.yanolja.com/search/" + keyword +
                     "?keyword=" + keyword +
                     "&searchKeyword=" + keyword +
                     "&checkinDate=" + i +
-                    "&checkoutDate=" + i.plusDays(day);
+                    "&checkoutDate=" + i.plusDays(day).minusDays(1);
 
             try {
                 driver.get(url);
                 // WebDriverWait를 사용하여 최대 10초까지 기다립니다.
                 WebDriverWait wait = new WebDriverWait(driver, Duration.ofSeconds(10));
 
-                List<WebElement> aTags = wait.until(ExpectedConditions.presenceOfAllElementsLocatedBy(By.cssSelector("div.PlaceListBody_listGroup__LddQf.PlaceListBody_keywordAssociation__RBXqI a")));
+//                List<WebElement> aTags = wait.until(ExpectedConditions.presenceOfAllElementsLocatedBy(By.cssSelector("div.PlaceListBody_listGroup__LddQf.PlaceListBody_keywordAssociation__RBXqI a")));
+                List<WebElement> aTags = wait.until(ExpectedConditions.presenceOfAllElementsLocatedBy(By.cssSelector("div.PlaceListItemText_container__fUIgA.text-unit a")));
+
 
                 /**
                  * 정규표현식을 통해 괄호 + 안의 내용 제거
