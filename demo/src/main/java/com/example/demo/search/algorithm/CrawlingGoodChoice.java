@@ -11,8 +11,12 @@ import org.springframework.cache.annotation.Cacheable;
 import org.springframework.stereotype.Component;
 
 import java.io.IOException;
+import java.net.URI;
+import java.net.URISyntaxException;
 import java.time.LocalDate;
 import java.util.*;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 @Component
 public class CrawlingGoodChoice {
@@ -35,6 +39,8 @@ public class CrawlingGoodChoice {
     public HashMap<String, CrawledHotel> search(String keyword, LocalDate startDate, LocalDate endDate, Long day) {
         HashMap<String, CrawledHotel> goodChoiceHashMap = new HashMap<>();
 
+        String scoreRegex = "(\\d+\\.\\d+)";
+        Pattern scorePattern = Pattern.compile(scoreRegex);
 
         for (LocalDate i = startDate; i.isBefore(endDate.minusDays(day).plusDays(1).plusDays(1)); i = i.plusDays(1)) {
             try {
@@ -49,9 +55,16 @@ public class CrawlingGoodChoice {
                     String title = l.getElementsByClass("lazy").attr("alt");
 
                     if (!goodChoiceHashMap.containsKey(title)) {
-                        String href = l.getElementsByTag("a").attr("href");
-                        String img = l.getElementsByClass("lazy").attr("data-original");
-                        String score = l.getElementsByClass("score").text();
+                        String href = null;
+                        try {
+                            URI uri = new URI(l.getElementsByTag("a").attr("href"));
+                            href = uri.getScheme() + "://" + uri.getHost() + uri.getPath() + "?" + uri.getQuery().split("&")[0];
+                        } catch (URISyntaxException e) {
+                        }
+
+                        String img = "https:" + l.getElementsByClass("lazy").attr("data-original");
+                        Matcher scoreMatcher = scorePattern.matcher(l.getElementsByClass("score").text());
+                        String score = scoreMatcher.find() ? scoreMatcher.group(1) : null;
 
                         CrawledHotel goodChoice = new CrawledHotel(title);
                         HotelInfo hotelInfo = new HotelInfo("goodChoice", href, img, score);
@@ -62,9 +75,10 @@ public class CrawlingGoodChoice {
                     String price = Optional
                             .ofNullable(l.select("b[style=\"color: rgba(0,0,0,1);\"]").first())
                             .map(Element::text)
+                            .map(text -> text.replaceAll("[^0-9]", ""))
                             .orElse(null);
                     CrawledHotel crawledHotel = goodChoiceHashMap.get(title);
-                    PriceByDate priceByDate = new PriceByDate("goodChoice", i.toString(), i.plusDays(day).toString(), price);
+                    PriceByDate priceByDate = new PriceByDate("goodChoice", i.toString(), i.plusDays(day).minusDays(1).toString(), price);
                     crawledHotel.addPriceByDate(priceByDate);
                     goodChoiceHashMap.put(title, crawledHotel);
                 }
@@ -87,10 +101,12 @@ public class CrawlingGoodChoice {
     public static HashMap<String, List<PriceByDate>> detail(String href, LocalDate startDate, LocalDate endDate, Long day) {
         HashMap<String, List<PriceByDate>> goodChoiceHashMap = new HashMap<>();
 
+        Pattern pattern = Pattern.compile("[0-9,]+");
+
         //https://www.goodchoice.kr/product/detail?ano=65814&adcno=2&sel_date=2023-07-28&sel_date2=2023-07-29
-        for(LocalDate i = startDate; i.isBefore(endDate.minusDays(day).plusDays(1)); i = i.plusDays(1)) {
+        for(LocalDate i = startDate; i.isBefore(endDate.minusDays(day).plusDays(1).plusDays(1)); i = i.plusDays(1)) {
             try {
-                String url = href + "&sel_date=" + i.toString() + "&sel_date2=" + i.plusDays(day).toString();
+                String url = href + "&sel_date=" + i.toString() + "&sel_date2=" + i.plusDays(day).minusDays(1).toString();
 
                 Document document = Jsoup.connect(url).get();
 
@@ -103,9 +119,11 @@ public class CrawlingGoodChoice {
                         goodChoiceHashMap.put(title, priceByDates);
                     }
 
-                    String price = l.select("b").text();
+                    Matcher matcher = pattern.matcher(l.select("b").text());
+                    String price = matcher.find() ? matcher.group().replaceAll(",", "") : null;
+
                     List<PriceByDate> priceByDates = goodChoiceHashMap.get(title);
-                    PriceByDate priceByDate = new PriceByDate("goodChoice", i.toString(), i.plusDays(day).toString(), price);
+                    PriceByDate priceByDate = new PriceByDate("goodChoice", i.toString(), i.plusDays(day).minusDays(1).toString(), price);
                     priceByDates.add(priceByDate);
                     goodChoiceHashMap.put(title, priceByDates);
                 }

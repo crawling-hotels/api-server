@@ -8,10 +8,7 @@ import org.springframework.stereotype.Component;
 
 import java.time.LocalDate;
 import java.time.temporal.ChronoUnit;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import java.util.concurrent.*;
 
 @Component
@@ -37,6 +34,12 @@ public class CrawledHotelMerge {
 //            CrawledHotel value = result.get(key);
 //            System.out.println(value.toString());
 //        }
+
+        HotelInfo hotelInfo1 = new HotelInfo("1", "2", "3", "4");
+        HotelInfo hotelInfo2 = new HotelInfo("1", "2", "3", "4");
+        System.out.println(hotelInfo1.equals(hotelInfo2));
+        System.out.println(hotelInfo1.hashCode());
+        System.out.println(hotelInfo2.hashCode());
     }
 
     public HashMap<String, CrawledHotel> search(String keyword, LocalDate startDate, LocalDate endDate, Long day){
@@ -73,7 +76,7 @@ public class CrawledHotelMerge {
             }
 
             executorService.shutdown();
-            executorService.awaitTermination(Long.MAX_VALUE, TimeUnit.SECONDS);
+            executorService.awaitTermination(Long.MAX_VALUE, TimeUnit.NANOSECONDS);
 
             HashMap<String, CrawledHotel> mergedHashMap = new HashMap<>();
             for (Future<HashMap<String, CrawledHotel>> future : futures) {
@@ -134,7 +137,7 @@ public class CrawledHotelMerge {
         for(Map.Entry<String, CrawledHotel> entry: resultHashMap.entrySet()) {
             if(mergedHashMap.containsKey(entry.getKey())){
                 List<PriceByDate> prices = resultHashMap.get(entry.getKey()).getPrices();
-                List<HotelInfo> hotelInfos = resultHashMap.get(entry.getKey()).getHotelInfos();
+                Set<HotelInfo> hotelInfos = resultHashMap.get(entry.getKey()).getHotelInfos();
 
                 CrawledHotel value = mergedHashMap.get(entry.getKey());
                 value.addHotelInfoAll(hotelInfos);

@@ -52,6 +52,12 @@ public class CrawlingYanolja {
         chromeOptions.setBrowserVersion("115");
         WebDriver driver = new ChromeDriver(chromeOptions);
 
+        String titleRegex = "\\([^\\(\\)]+\\)";
+        Pattern titlePattern = Pattern.compile(titleRegex);
+
+        String imageRegex = "background-image:\\\\s*url\\\\(\\\"([^\\\"]+)\\\"\\\\);";
+        Pattern imagePattern = Pattern.compile(imageRegex);
+
         for(LocalDate i = startDate; i.isBefore(endDate.minusDays(day).plusDays(1).plusDays(1)); i = i.plusDays(1)) {
 
             String url = "https://www.yanolja.com/search/" + keyword +
@@ -69,22 +75,22 @@ public class CrawlingYanolja {
                 List<WebElement> aTags = wait.until(ExpectedConditions.presenceOfAllElementsLocatedBy(By.cssSelector("div.PlaceListItemText_container__fUIgA.text-unit a")));
 
 
-                /**
-                 * 정규표현식을 통해 괄호 + 안의 내용 제거
-                 * 이유 : 명확한 호텔 이름
-                 */
-                String regex = "\\([^\\(\\)]+\\)";
-                Pattern pattern = Pattern.compile(regex);
+
                 String title = "";
 
                 for (WebElement aTag : aTags) {
                     String titleValue = aTag.getAttribute("title");
-                    Matcher matcher = pattern.matcher(titleValue);
+                    Matcher matcher = titlePattern.matcher(titleValue);
                     title = matcher.replaceAll("");
 
                     if (!yanoljaHashMap.containsKey(title)) {
                         String scoreValue = aTag.findElement(By.cssSelector(".PlaceListScore_rating__3Glxf")).getText();
-                        String imageValue = aTag.findElement(By.cssSelector(".PlaceListImage_imageText__2XEMn")).getAttribute("style");
+//                        String imageValue = imagePattern.matcher(aTag.findElement(By.cssSelector(".PlaceListImage_imageText__2XEMn")).getAttribute("style")).group(1);
+                        String imageValue = aTag
+                                .findElement(By.cssSelector(".PlaceListImage_imageText__2XEMn"))
+                                .getAttribute("style")
+                                .replaceAll("background-image:\\s*url\\(\"", "")
+                                .replaceAll("\\\"\\);", "");
                         String hrefValue = aTag.getAttribute("href");
 
                         CrawledHotel yanolja = new CrawledHotel(title);
@@ -95,16 +101,20 @@ public class CrawlingYanolja {
 
                     String price = "";
                     try {
-                        price = aTag.findElement(By.cssSelector(".PlacePriceInfoV2_discountPrice__1PuwK")).getText();
+                        price = aTag
+                                .findElement(By.cssSelector(".PlacePriceInfoV2_discountPrice__1PuwK"))
+                                .getText()
+                                .replaceAll("[^0-9]", "");
                     } catch (org.openqa.selenium.NoSuchElementException e) {
                         /**
                          * 예약마감인 경우
                          */
-                        price = driver.findElement(By.cssSelector(".PlacePriceInfoV2_priceNote__3xLR2")).getText();
+//                        price = driver.findElement(By.cssSelector(".PlacePriceInfoV2_priceNote__3xLR2")).getText();
+                        price = null;
                     }
 
                     CrawledHotel crawledHotel = yanoljaHashMap.get(title);
-                    PriceByDate priceByDate = new PriceByDate("yanolja", i.toString(), i.plusDays(day).toString(), price);
+                    PriceByDate priceByDate = new PriceByDate("yanolja", i.toString(), i.plusDays(day).minusDays(1).toString(), price);
                     crawledHotel.addPriceByDate(priceByDate);
                     yanoljaHashMap.put(title, crawledHotel);
                 }
@@ -134,11 +144,14 @@ public class CrawlingYanolja {
          */
         HashMap<String, List<PriceByDate>> yanoljaHashMap = new HashMap<>();
 
-        SafariOptions options = new SafariOptions();
-        WebDriver driver = new SafariDriver(new SafariOptions());
+        Pattern pattern = Pattern.compile("[0-9,]+");
 
-        for(LocalDate i = startDate; i.isBefore(endDate.minusDays(day).plusDays(1)); i = i.plusDays(1)) {
-            String url = href + "?checkinDate=" + i.toString() + "&checkoutDate=" + i.plusDays(day).toString() + "&adultPax=2";
+        ChromeOptions chromeOptions = new ChromeOptions();
+        chromeOptions.setBrowserVersion("115");
+        WebDriver driver = new ChromeDriver(chromeOptions);
+
+        for(LocalDate i = startDate; i.isBefore(endDate.minusDays(day).plusDays(1).plusDays(1)); i = i.plusDays(1)) {
+            String url = href + "?checkinDate=" + i.toString() + "&checkoutDate=" + i.plusDays(day).minusDays(1).toString() + "&adultPax=2";
 
             try {
                 driver.get(url);
@@ -156,9 +169,12 @@ public class CrawlingYanolja {
                         yanoljaHashMap.put(room, priceByDates);
                     }
 
-                    String price = w.findElement(By.cssSelector(".css-17ymi7c")).getText();
+                    Matcher matcher = pattern.matcher(w.findElement(By.cssSelector(".css-17ymi7c")).getText());
+                    String price = matcher.find() ? matcher.group().replaceAll(",", "") : null;
+
+
                     List<PriceByDate> priceByDates = yanoljaHashMap.get(room);
-                    PriceByDate priceByDate = new PriceByDate("yanolja", i.toString(), i.plusDays(day).toString(), price);
+                    PriceByDate priceByDate = new PriceByDate("yanolja", i.toString(), i.plusDays(day).minusDays(1).toString(), price);
                     priceByDates.add(priceByDate);
                     yanoljaHashMap.put(room, priceByDates);
                 }
@@ -180,7 +196,5 @@ public class CrawlingYanolja {
         }
         driver.quit();
         return yanoljaHashMap;
-
-
     }
 }
