@@ -5,6 +5,7 @@ import com.example.demo.common.dto.MessageResponse;
 import com.example.demo.hotel.domain.Hotel;
 import com.example.demo.hotel.domain.HotelDetail;
 import com.example.demo.hotel.repository.HotelRepository;
+import com.example.demo.search.exception.HotelNotFoundException;
 import com.example.demo.search.vo.CrawledHotel;
 import com.example.demo.search.algorithm.CrawledHotelMerge;
 import com.example.demo.search.vo.HotelInfo;
@@ -27,9 +28,12 @@ public class SearchService {
     @Autowired
     private HotelRepository hotelRepository;
 
+    @Autowired
+    private CrawledHotelMerge crawledHotelMerge;
+
     @Transactional
     public MessageResponse<HashMap<String, CrawledHotel>> search(String keyword, LocalDate startDate, LocalDate endDate, Long day) {
-        HashMap<String, CrawledHotel> crawling = CrawledHotelMerge.search(keyword, startDate, endDate, day);
+        HashMap<String, CrawledHotel> crawling = crawledHotelMerge.search(keyword, startDate, endDate, day);
 
         for(String key : crawling.keySet()){
             if(!hotelRepository.existsByName(key)){
@@ -54,8 +58,11 @@ public class SearchService {
 //        Hotel hotel = hotelRepository.findByName(name)
 //                .orElseThrow(() -> throw new )
 
-        Optional<Hotel> optionalHotel = hotelRepository.findByName(keyword);
-        Hotel hotel = optionalHotel.get();
+        /**
+         * HotelService 에서 호출하지 않는 이유 : hotelService.getHotel()은 존재하지 않을때 새로 생성하기 때문에.
+         */
+        Hotel hotel = hotelRepository.findByName(keyword)
+                .orElseThrow(() -> new HotelNotFoundException(ResponseCodeEnum.HOTEL_NOT_FOUND.getMessage()));
 
         List<HotelInfo> hotelInfos =
                 hotel.getHotelDetails().stream().map(hotelDetail -> hotelDetail.getHotelInfo()).collect(Collectors.toList());

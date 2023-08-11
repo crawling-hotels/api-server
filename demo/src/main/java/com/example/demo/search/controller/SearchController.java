@@ -26,6 +26,4 @@ public class SearchController {
                        @RequestParam("checkoutDate") LocalDate checkoutDate, @RequestParam("day") Long day){
         return ResponseEntity.ok().body(searchService.detail(keyword, checkinDate, checkoutDate, day));
     }
-
-
 }

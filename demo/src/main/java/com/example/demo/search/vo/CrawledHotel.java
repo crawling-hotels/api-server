@@ -1,12 +1,14 @@
 package com.example.demo.search.vo;
 
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 
 public class CrawledHotel {
     private String name;
 
-    private List<HotelInfo> hotelInfos;
+    private Set<HotelInfo> hotelInfos;
 
     private List<PriceByDate> prices;
 
@@ -16,17 +18,18 @@ public class CrawledHotel {
 
     public void addHotelInfo(HotelInfo hotelInfo){
         if(hotelInfos == null){
-            hotelInfos = new ArrayList<>();
+            hotelInfos = new HashSet<>();
         }
 
         this.hotelInfos.add(hotelInfo);
     }
 
-    public void addHotelInfoAll(List<HotelInfo> hotelInfos){
+    public void addHotelInfoAll(Set<HotelInfo> hotelInfos){
+
         this.hotelInfos.addAll(hotelInfos);
     }
 
-    public List<HotelInfo> getHotelInfos(){
+    public Set<HotelInfo> getHotelInfos(){
         return hotelInfos;
     }
 
