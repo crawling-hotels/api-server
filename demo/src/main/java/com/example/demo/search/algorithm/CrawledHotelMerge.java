@@ -1,9 +1,11 @@
 package com.example.demo.search.algorithm;
 
+import com.example.demo.search.dto.CrawlingRequest;
 import com.example.demo.search.vo.CrawledHotel;
+import com.example.demo.search.vo.CrawlingType;
 import com.example.demo.search.vo.HotelInfo;
 import com.example.demo.search.vo.PriceByDate;
-import org.springframework.beans.factory.annotation.Autowired;
+import com.example.demo.util.constant.Constant;
 import org.springframework.stereotype.Component;
 
 import java.time.LocalDate;
@@ -13,7 +15,6 @@ import java.util.concurrent.*;
 
 @Component
 public class CrawledHotelMerge {
-    private static int MAX_REQUEST_THREAD_NUM = 3;
     private final CrawlingYanolja crawlingYanolja;
     private final CrawlingGoodChoice crawlingGoodChoice;
 
@@ -22,41 +23,29 @@ public class CrawledHotelMerge {
         this.crawlingGoodChoice = crawlingGoodChoice;
     }
 
-    public static void main(String[] args){
-//        String keyword = "광주";
-//        LocalDate startDate = LocalDate.of(2023, 8, 1);
-//        LocalDate endDate = LocalDate.of(2023, 8, 3);
-//        Long day = 2L;
-//
-//        HashMap<String, CrawledHotel> result = search(keyword, startDate, endDate, day);
-//
-//        for (String key : result.keySet()) {
-//            CrawledHotel value = result.get(key);
-//            System.out.println(value.toString());
-//        }
+    public <T> HashMap<String, CrawledHotel> search(CrawlingRequest crawlingRequest){
+        String keyword = crawlingRequest.getKeyword();
+        LocalDate startDate = crawlingRequest.getCheckinDate();
+        LocalDate endDate = crawlingRequest.getCheckoutDate();
+        Long day = crawlingRequest.getDay();
 
-        HotelInfo hotelInfo1 = new HotelInfo("1", "2", "3", "4");
-        HotelInfo hotelInfo2 = new HotelInfo("1", "2", "3", "4");
-        System.out.println(hotelInfo1.equals(hotelInfo2));
-        System.out.println(hotelInfo1.hashCode());
-        System.out.println(hotelInfo2.hashCode());
-    }
-
-    public HashMap<String, CrawledHotel> search(String keyword, LocalDate startDate, LocalDate endDate, Long day){
         try {
+            long threadSeparateStart = System.nanoTime();
             ExecutorService executorService = Executors.newCachedThreadPool();
 
-            List<Future<HashMap<String, CrawledHotel>>> futures = new ArrayList<>();
+            List<Future<HashMap<String, T>>> futures = new ArrayList<>();
 
-            int[] daysSuitableDatesPerThread = assignSuitableDates(startDate, endDate, day);
+            int[] daysSuitableDatesPerThread = assignSuitableDates(
+                    startDate, endDate, day
+            );
+
 //            for(int i = 0; i < MAX_REQUEST_THREAD_NUM; i++){
 //                System.out.println("daysSuitableDatesPerThread[" + i + "] : " + daysSuitableDatesPerThread[i]);
 //            }
 
             LocalDate tempStartDate = startDate;
             LocalDate tempEndDate = endDate;
-            for(int i = 0; i < MAX_REQUEST_THREAD_NUM; i++) {
-//                System.out.println(i);
+            for(int i = 0; i < Constant.TASK_SEPARATE_NUM; i++) {
                 if(daysSuitableDatesPerThread[i] == 0)
                     continue;
                 /**
@@ -69,18 +58,26 @@ public class CrawledHotelMerge {
 
                 LocalDate finalTempStartDate = tempStartDate;
                 LocalDate finalTempEndDate = tempEndDate;
-                System.out.println("start : " + finalTempStartDate + " end : " + finalTempEndDate);
-                futures.add(executorService.submit(() -> crawlingGoodChoice.search(keyword, finalTempStartDate, finalTempEndDate, day)));
-                futures.add(executorService.submit(() -> crawlingYanolja.search(keyword, finalTempStartDate, finalTempEndDate, day)));
+                crawlingYanolja.addCrawlingRequest(new CrawlingRequest(keyword, finalTempStartDate, finalTempEndDate, day, CrawlingType.SEARCH));
+                crawlingGoodChoice.addCrawlingRequest(new CrawlingRequest(keyword, finalTempStartDate, finalTempEndDate, day, CrawlingType.SEARCH));
+
                 tempStartDate = tempEndDate.minusDays(1);
             }
+
+            /**
+             * 비동기로 받아오기.
+             */
+            futures.add(executorService.submit(() -> crawlingGoodChoice.crawl()));
+            futures.add(executorService.submit(() -> crawlingYanolja.crawl()));
+
+            long threadSeparateEnd = System.nanoTime();
 
             executorService.shutdown();
             executorService.awaitTermination(Long.MAX_VALUE, TimeUnit.NANOSECONDS);
 
             HashMap<String, CrawledHotel> mergedHashMap = new HashMap<>();
-            for (Future<HashMap<String, CrawledHotel>> future : futures) {
-                HashMap<String, CrawledHotel> resultHashMap = future.get();
+            for (Future<HashMap<String, T>> future : futures) {
+                HashMap<String, CrawledHotel> resultHashMap = (HashMap<String, CrawledHotel>) future.get();
                 mergeSearchHashMaps(mergedHashMap, resultHashMap);
             }
 
@@ -94,24 +91,28 @@ public class CrawledHotelMerge {
         return null;
     }
 
-    public static HashMap<String, List<PriceByDate>> detail(List<HotelInfo> hotelInfos, LocalDate checkinDate, LocalDate checkoutDate, Long day){
+    public HashMap<String, List<PriceByDate>> detail(List<HotelInfo> hotelInfos, LocalDate checkinDate, LocalDate checkoutDate, Long day){
         try {
-            ExecutorService executorService = Executors.newScheduledThreadPool(2);
+            ExecutorService executorService = Executors.newCachedThreadPool();
 
             List<Future<HashMap<String, List<PriceByDate>>>> futures = new ArrayList<>();
 
             for(HotelInfo hi: hotelInfos){
                 switch (hi.getCompany()){
                     case "yanolja":
-                        futures.add(executorService.submit(() ->
-                                CrawlingYanolja.detail(hi.getPath(), checkinDate, checkoutDate, day)));
+                        crawlingYanolja.addCrawlingRequest(new CrawlingRequest(hi.getPath(), checkinDate, checkoutDate, day, CrawlingType.DETAIL));
                         break;
                     case "goodChoice":
-                        futures.add(executorService.submit(() ->
-                                CrawlingGoodChoice.detail(hi.getPath(), checkinDate, checkoutDate, day)));
+                        crawlingGoodChoice.addCrawlingRequest(new CrawlingRequest(hi.getPath(), checkinDate, checkoutDate, day, CrawlingType.DETAIL));
                         break;
                 }
             }
+
+            /**
+             * 비동기로 받아오기.
+             */
+            futures.add(executorService.submit(() -> crawlingGoodChoice.crawl()));
+            futures.add(executorService.submit(() -> crawlingYanolja.crawl()));
 
             executorService.shutdown();
             executorService.awaitTermination(Long.MAX_VALUE, TimeUnit.NANOSECONDS);
@@ -170,18 +171,17 @@ public class CrawledHotelMerge {
     }
 
     private static int[] assignSuitableDates(LocalDate startDate, LocalDate endDate, Long day){
-        //  60일을 최대로 한다고 가정하고 6개의 스레드를 최대로 하자.
-        int[] daysSuitableDatesPerThread = new int[MAX_REQUEST_THREAD_NUM];
+        int[] daysSuitableDatesPerThread = new int[Constant.TASK_SEPARATE_NUM];
 
         long daysBetween = ChronoUnit.DAYS.between(startDate, endDate) + 1;
-        long daysToRequest = daysBetween - day + 1;
+        long numToRequest = daysBetween - day + 1;
 
-        for(int i = 0; i < MAX_REQUEST_THREAD_NUM; i++){
+        for(int i = 0; i < Constant.TASK_SEPARATE_NUM; i++){
 //            System.out.println(daysToRequest);
-            daysSuitableDatesPerThread[i] = (int) (daysToRequest / MAX_REQUEST_THREAD_NUM);
+            daysSuitableDatesPerThread[i] = (int) (numToRequest / Constant.TASK_SEPARATE_NUM);
         }
 
-        for(int i = 0; i < (int) (daysToRequest % MAX_REQUEST_THREAD_NUM); i++){
+        for(int i = 0; i < (int) (numToRequest % Constant.TASK_SEPARATE_NUM); i++){
             daysSuitableDatesPerThread[i] += 1;
         }
 

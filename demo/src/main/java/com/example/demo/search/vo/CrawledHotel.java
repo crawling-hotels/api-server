@@ -5,7 +5,7 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
-public class CrawledHotel {
+public class CrawledHotel extends Object{
     private String name;
 
     private Set<HotelInfo> hotelInfos;
