@@ -5,9 +5,11 @@ import com.example.demo.common.dto.MessageResponse;
 import com.example.demo.hotel.domain.Hotel;
 import com.example.demo.hotel.domain.HotelDetail;
 import com.example.demo.hotel.repository.HotelRepository;
+import com.example.demo.search.dto.CrawlingRequest;
 import com.example.demo.search.exception.HotelNotFoundException;
 import com.example.demo.search.vo.CrawledHotel;
 import com.example.demo.search.algorithm.CrawledHotelMerge;
+import com.example.demo.search.vo.CrawlingType;
 import com.example.demo.search.vo.HotelInfo;
 import com.example.demo.search.vo.PriceByDate;
 import lombok.RequiredArgsConstructor;
@@ -19,7 +21,6 @@ import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
-import java.util.Optional;
 import java.util.stream.Collectors;
 
 @Service
@@ -33,7 +34,7 @@ public class SearchService {
 
     @Transactional
     public MessageResponse<HashMap<String, CrawledHotel>> search(String keyword, LocalDate startDate, LocalDate endDate, Long day) {
-        HashMap<String, CrawledHotel> crawling = crawledHotelMerge.search(keyword, startDate, endDate, day);
+        HashMap<String, CrawledHotel> crawling = crawledHotelMerge.search(new CrawlingRequest(keyword, startDate, endDate, day, CrawlingType.SEARCH));
 
         for(String key : crawling.keySet()){
             if(!hotelRepository.existsByName(key)){
@@ -68,7 +69,7 @@ public class SearchService {
                 hotel.getHotelDetails().stream().map(hotelDetail -> hotelDetail.getHotelInfo()).collect(Collectors.toList());
 
         HashMap<String, List<PriceByDate>> prices =
-                CrawledHotelMerge.detail(hotelInfos, checkinDate, checkoutDate, day);
+                crawledHotelMerge.detail(hotelInfos, checkinDate, checkoutDate, day);
 
         return MessageResponse.of(ResponseCodeEnum.DETAIL_SEARCH_SUCCESS, prices);
     }
